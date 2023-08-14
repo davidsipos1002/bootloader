@@ -1,33 +1,33 @@
-#include <Uefi.h>
-#include <bootloader/print.h>
- 
+#include <efi.h>
+#include <efilib.h>
+#include <bootloader/console.h>
+#include <bootloader/filesystem.h>
+#include <bootloader/elfloader.h>
+
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS Status;
-    EFI_INPUT_KEY Key;
- 
-    /* Store the system table for future use in other functions */
     EFI_SYSTEM_TABLE *ST = SystemTable;
- 
-    /* Say hi */
-    ST->ConOut->ClearScreen(ST->ConOut);
-    Status = print(ST);
-    if (EFI_ERROR(Status))
-        return Status;
- 
-    /* Now wait for a keystroke before continuing, otherwise your
-       message will flash off the screen before you see it.
- 
-       First, we need to empty the console input buffer to flush
-       out any keystrokes entered before this point */
-    Status = ST->ConIn->Reset(ST->ConIn, FALSE);
-    if (EFI_ERROR(Status))
-        return Status;
- 
-    /* Now wait until a key becomes available.  This is a simple
-       polling implementation.  You could try and use the WaitForKey
-       event instead if you like */
-    while ((Status = ST->ConIn->ReadKeyStroke(ST->ConIn, &Key)) == EFI_NOT_READY) ;
- 
-    return Status;
+    Status = ST->BootServices->SetWatchdogTimer(0, 0, 0, 0);
+    clearScreen(ST);
+    printString(ST, EFI_YELLOW, L"David's Bootloader\r\n");
+    printString(ST, EFI_WHITE, L"Loading kernel image...\r\n");
+    EFI_FILE_HANDLE rootDirectory = getRootDirectory(ImageHandle, ST);
+    if(rootDirectory == NULL) 
+    {
+        printString(ST, EFI_RED, L"Failed to open root directory\r\n");
+        return WaitForKeyPress(ST);
+    }
+    printString(ST, EFI_GREEN, L"Root directory successfully opened\r\n");
+    EFI_FILE_HANDLE kernelImage;
+    Status = openKernelImage(rootDirectory, &kernelImage);
+    if(Status != EFI_SUCCESS) 
+    {
+        printString(ST, EFI_RED, L"Kernel binary could not be opened\r\n");
+        return WaitForKeyPress(ST);
+    }
+    printString(ST, EFI_GREEN, L"Successfully opened kernel binary\r\n");
+    loadElf(ST, kernelImage);
+    rootDirectory->Close(rootDirectory);
+    return WaitForKeyPress(ST);
 }

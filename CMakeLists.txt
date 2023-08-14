@@ -5,8 +5,9 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 project(Bootloader VERSION 0.1 LANGUAGES C)
 
-set(includes include/UEFI/ include/UEFI/Uefi/ include/UEFI/X64/ include/)
+set(includes include/ gnu-efi/inc gnu-efi/inc/x86_64 gnu-efi/inc/protocol)
 file(GLOB_RECURSE sources src/*.c)
+list(APPEND sources gnu-efi/lib/data.c)
 
 add_executable(BOOTX64.EFI ${sources})
 target_include_directories(BOOTX64.EFI PUBLIC ${includes})
