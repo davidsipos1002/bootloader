@@ -1,6 +1,26 @@
 #include <bootloader/console.h>
 #include <stdbool.h>
 
+EFI_STATUS setConsoleMode(EFI_SYSTEM_TABLE *ST) 
+{
+    UINTN maxMode = ST->ConOut->Mode->MaxMode;
+    UINTN finalMode;
+    UINTN col = 0;
+    UINTN row = 0;
+    UINTN columns, rows;
+    for(UINTN i = 0;i < maxMode;i++) 
+    {
+        ST->ConOut->QueryMode(ST->ConOut, i, &columns, &rows);
+        if(rows > row && columns > col)
+        {
+            row = rows;
+            col = columns;
+            finalMode = i;
+        }
+    }
+    return ST->ConOut->SetMode(ST->ConOut, finalMode);
+}
+
 EFI_STATUS clearScreen(EFI_SYSTEM_TABLE *ST) 
 {
     return ST->ConOut->ClearScreen(ST->ConOut);

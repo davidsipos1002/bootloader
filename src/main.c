@@ -1,5 +1,6 @@
 #include <efi.h>
 #include <efilib.h>
+#include <bootloader/graphics.h>
 #include <bootloader/console.h>
 #include <bootloader/filesystem.h>
 #include <bootloader/elfloader.h>
@@ -9,7 +10,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     EFI_STATUS Status;
     EFI_SYSTEM_TABLE *ST = SystemTable;
     Status = ST->BootServices->SetWatchdogTimer(0, 0, 0, 0);
-    clearScreen(ST);
+    if(EFI_ERROR(setConsoleMode(ST)))
+        printString(ST, EFI_RED, L"Could not set console mode\r\n");
     printString(ST, EFI_YELLOW, L"David's Bootloader\r\n");
     printString(ST, EFI_WHITE, L"Loading kernel image...\r\n");
     EFI_FILE_HANDLE rootDirectory = getRootDirectory(ImageHandle, ST);
