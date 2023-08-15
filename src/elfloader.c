@@ -1,7 +1,9 @@
 #include <bootloader/elfloader.h>
 #include <bootloader/elf.h>
 #include <bootloader/console.h>
+#include <stdbool.h>
 
+bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderEntry);
 
@@ -14,6 +16,8 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
         printString(ST, EFI_RED, L"Error reading ELF header\r\n");
         return EFI_LOAD_ERROR;
     }
+    if(!validateElfHeader(ST, &elfHeader))
+        return EFI_LOAD_ERROR;
     printElfHeader(ST, &elfHeader);
     Status = kernelImage->SetPosition(kernelImage, elfHeader.e_phoff);
     if(Status != EFI_SUCCESS || sizeof(Elf64_Phdr) != elfHeader.e_phentsize)
@@ -24,9 +28,11 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
     } 
     Elf64_Phdr pHeader;
     BufferSize = elfHeader.e_phentsize;
-    for(Elf64_Half i = 0;i < elfHeader.e_phnum;i++) {
+    for(Elf64_Half i = 0;i < elfHeader.e_phnum;i++) 
+    {
         Status = kernelImage->Read(kernelImage, &BufferSize, &pHeader);
-        if(Status != EFI_SUCCESS) {
+        if(Status != EFI_SUCCESS) 
+        {
            printString(ST, EFI_RED, L"Error reading program header table entries\r\n");
            kernelImage->Close(kernelImage);
            return EFI_LOAD_ERROR; 
@@ -39,12 +45,54 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
     return EFI_SUCCESS;
 }
 
+bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader)
+{
+    if(elfHeader->e_ident[EI_MAG0] != 0x7F || elfHeader->e_ident[EI_MAG1] != 'E' || 
+    elfHeader->e_ident[EI_MAG2] != 'L' || elfHeader->e_ident[EI_MAG3] != 'F')
+    {
+        printString(ST, EFI_RED, L"Kernel image is not in the ELF format\r\n");
+        return false;
+    }
+    if(elfHeader->e_ident[EI_CLASS] != ELFCLASS64) 
+    {
+        printString(ST, EFI_RED, L"Kernel image not a 64-bit file\r\n");
+        return false;
+    }
+    if(elfHeader->e_ident[EI_DATA] != ELFDATA2LSB) 
+    {
+        printString(ST, EFI_RED, L"Kernel image is not little endian\r\n");
+        return false;
+    }
+    if(elfHeader->e_ident[EI_VERSION] != EV_CURRENT) 
+    {
+        printString(ST, EFI_RED, L"Kernel image has incorrect version\r\n");
+        return false;
+    }
+    if(elfHeader->e_ident[EI_OSABI] != ELFOSABI_SYSV) 
+    {
+        printString(ST, EFI_RED, L"Kernel image has incorrect ABI\r\n");
+        return false;
+    }
+    if(elfHeader->e_type != ET_EXEC)
+    {
+        printString(ST, EFI_RED, L"Kernel image is not executable\r\n");
+        return false;
+    }
+    if(elfHeader->e_machine != EM_AMDX86_64)
+    {
+        printString(ST, EFI_RED, L"Kernel image is not compatible with the processor\r\n");
+        return false;
+    }
+    return true;
+}
+
 void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader) 
 {
        printString(ST, EFI_WHITE, L"ELF Header\r\n");
 
     printString(ST, EFI_WHITE, L"e_ident: ");
-    for(int i = 0;i < EI_NIDENT;i++) {
+    for(int i = 0;i < EI_NIDENT;i++) 
+    {
         printIntegerInHexadecimal(ST, EFI_WHITE, elfHeader->e_ident[i]);
         printString(ST, EFI_WHITE, L" ");
     }
