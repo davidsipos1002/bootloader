@@ -9,7 +9,7 @@ set(includes include/ gnu-efi/inc gnu-efi/inc/x86_64 gnu-efi/inc/protocol)
 file(GLOB_RECURSE sources src/*.c)
 list(APPEND sources gnu-efi/lib/data.c)
 
-add_executable(BOOTX64.EFI ${sources})
-target_include_directories(BOOTX64.EFI PUBLIC ${includes})
+add_executable(DAVID.EFI ${sources})
+target_include_directories(DAVID.EFI PUBLIC ${includes})
 
-install(TARGETS BOOTX64.EFI DESTINATION build/efi)
+install(TARGETS DAVID.EFI DESTINATION build/efi)
