@@ -1,11 +1,13 @@
 #include <bootloader/elfloader.h>
 #include <bootloader/elf.h>
 #include <bootloader/console.h>
+#include <bootloader/memset.h>
 #include <stdbool.h>
 
 bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderEntry);
+uint64_t getPageCount(Elf64_XWord p_memsz);
 
 EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
     Elf64_Ehdr elfHeader;
@@ -43,6 +45,10 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
         printElfProgramHeaderTable(ST, &pHeader);
     }
     return EFI_SUCCESS;
+}
+
+uint64_t getPageCount(Elf64_XWord p_memsz) {
+    return p_memsz / 0x1000 + (p_memsz % 0x1000 != 0);
 }
 
 bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader)
@@ -178,6 +184,9 @@ void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderE
 
     printString(ST, EFI_WHITE, L"p_memsz: ");
     printIntegerInHexadecimal(ST, EFI_WHITE, programHeaderEntry->p_memsz);
+    uint64_t pageCount = getPageCount(programHeaderEntry->p_memsz);
+    printString(ST, EFI_WHITE, L" pageCount: ");
+    printIntegerInHexadecimal(ST, EFI_WHITE, pageCount);
     newLine(ST);
 
     printString(ST, EFI_WHITE, L"p_align: ");

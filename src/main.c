@@ -31,5 +31,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     printString(ST, EFI_GREEN, L"Successfully opened kernel binary\r\n");
     loadElf(ST, kernelImage);
     rootDirectory->Close(rootDirectory);
-    return WaitForKeyPress(ST);
+    WaitForKeyPress(ST);
+    return EFI_SUCCESS;
 }
