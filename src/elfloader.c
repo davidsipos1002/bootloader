@@ -1,7 +1,7 @@
 #include <bootloader/elfloader.h>
 #include <bootloader/elf.h>
 #include <bootloader/console.h>
-#include <bootloader/memset.h>
+#include <bootloader/filesystem.h>
 #include <stdbool.h>
 
 bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
@@ -9,7 +9,22 @@ void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderEntry);
 uint64_t getPageCount(Elf64_XWord p_memsz);
 
-EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage) {
+EFI_STATUS loadKernel(EFI_SYSTEM_TABLE *ST, EFI_HANDLE ImageHandle, uint64_t *pml4) {
+    EFI_FILE_HANDLE rootDirectory = getRootDirectory(ImageHandle, ST);
+    if(rootDirectory == NULL) 
+        return EFI_LOAD_ERROR;
+    EFI_FILE_HANDLE kernelImage;
+    EFI_STATUS Status = openKernelImage(rootDirectory, &kernelImage);
+    if(Status != EFI_SUCCESS) 
+        return EFI_LOAD_ERROR;
+    if(EFI_ERROR(loadElf(ST, kernelImage, pml4)))
+        return EFI_LOAD_ERROR;
+    kernelImage->Close(kernelImage);
+    rootDirectory->Close(rootDirectory);
+    return EFI_SUCCESS;
+}
+
+EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *pml4) {
     Elf64_Ehdr elfHeader;
     UINTN BufferSize = sizeof(elfHeader);
     EFI_STATUS Status = kernelImage->Read(kernelImage, &BufferSize, &elfHeader);
