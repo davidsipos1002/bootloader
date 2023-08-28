@@ -2,8 +2,10 @@
 #include <bootloader/elf.h>
 #include <bootloader/console.h>
 #include <bootloader/filesystem.h>
+#include <bootloader/paging.h>
 #include <stdbool.h>
 
+EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *pml4);
 bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderEntry);
@@ -47,6 +49,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
     BufferSize = elfHeader.e_phentsize;
     for(Elf64_Half i = 0;i < elfHeader.e_phnum;i++) 
     {
+        kernelImage->SetPosition(kernelImage, elfHeader.e_phoff + elfHeader.e_phentsize * i);
         Status = kernelImage->Read(kernelImage, &BufferSize, &pHeader);
         if(Status != EFI_SUCCESS) 
         {
@@ -58,6 +61,36 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
         printIntegerInDecimal(ST, EFI_WHITE, i);
         newLine(ST);
         printElfProgramHeaderTable(ST, &pHeader);
+        
+        if(pHeader.p_align != 0x1000) {
+            printString(ST, EFI_RED, L"Invalid alignment field\r\n");
+            return EFI_LOAD_ERROR;
+        }
+        if(pHeader.p_offset % pHeader.p_align != pHeader.p_vaddr % pHeader.p_align) {
+            printString(ST, EFI_RED, L"Invalid section alignment\r\n");
+            return EFI_LOAD_ERROR;
+        }
+        uint64_t pageCount = getPageCount(pHeader.p_memsz);
+        uint64_t alignedVAddr = pHeader.p_vaddr & (~0xFFF);
+        uint64_t *segment = allocateZeroedPages(ST, pageCount); 
+        if(segment == NULL)
+        {
+            printString(ST, EFI_RED, L"Could not allocate pages\r\n");
+            return EFI_LOAD_ERROR; 
+        }
+        if(!memoryMapPages(ST, pml4, (uint64_t) segment, alignedVAddr, pageCount)) {
+            printString(ST, EFI_RED, L"Could not map allocated pages\r\n");
+            return EFI_LOAD_ERROR;
+        }
+        if(EFI_ERROR(kernelImage->SetPosition(kernelImage, pHeader.p_offset))) {
+            printString(ST, EFI_RED, L"Could not set file position\r\n");
+            return EFI_LOAD_ERROR;
+        }
+        UINTN size = pHeader.p_filesz;
+        if(EFI_ERROR(kernelImage->Read(kernelImage, &size, (void *) segment))) {
+            printString(ST, EFI_RED, L"Could not read program segment\r\n");
+            return EFI_LOAD_ERROR;
+        }
     }
     return EFI_SUCCESS;
 }

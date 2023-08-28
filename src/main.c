@@ -18,8 +18,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         printString(ST, EFI_RED, L"Could not initialize paging\r\n");
         return WaitForKeyPress(ST);
     }
+    printString(ST, EFI_GREEN, L"Recursive paging initialized\r\n");
+    printString(ST, EFI_GREEN, L"PML4 address ");
+    printIntegerInHexadecimal(ST, EFI_GREEN, (uint64_t) pml4);
+    newLine(ST);
     if(EFI_ERROR(loadKernel(ST, ImageHandle, pml4)))
         printString(ST, EFI_RED, L"Could not load kernel\r\n");
+    printString(ST, EFI_GREEN, L"Kernel succesfully loaded and mapped\r\n");
     WaitForKeyPress(ST);
     return EFI_SUCCESS;
 }
