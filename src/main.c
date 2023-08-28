@@ -12,6 +12,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     Status = ST->BootServices->SetWatchdogTimer(0, 0, 0, 0);
     if(EFI_ERROR(setConsoleMode(ST)))
         printString(ST, EFI_RED, L"Could not set console mode\r\n");
+    printString(ST, EFI_YELLOW, L"David's Bootloader\r\n");
     uint64_t *pml4 = pagingInit(ST);
     if(!pml4) {
         printString(ST, EFI_RED, L"Could not initialize paging\r\n");
