@@ -14,14 +14,6 @@ typedef struct
 
 typedef struct 
 {
-    uint32_t type;
-    uint64_t physical_address;
-    uint64_t number_of_pages;
-    uint64_t attributes;
-} MemoryDescriptor;
-
-typedef struct 
-{
     uint64_t size;
     uint64_t map;
 } MemoryMap;

@@ -44,16 +44,23 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
         printString(ST, EFI_RED, L"Could not get gop\r\n");
         return WaitForKeyPress(ST);
     }
-    FrameBuffer frameBuffer;
-    UINT32 gopMode = obtainGraphicsMode(gop, &frameBuffer);
+    
+    BootInfo *bootInfo = allocateZeroedPages(ST, 1);
+    if(bootInfo == NULL || !memoryMapPages(ST, pml4, (uint64_t) bootInfo, 0xFFFEFFFFFFFFF000, 1))
+    {
+        printString(ST, EFI_RED, L"Could not allocate bootinfo\r\n");
+        return WaitForKeyPress(ST); 
+    }
+
+    UINT32 gopMode = obtainGraphicsMode(gop, &(bootInfo->framebuffer));
     if(gopMode == UINT32_MAX)
     {
         printString(ST, EFI_RED, L"Could not get gop mode\r\n");
         return WaitForKeyPress(ST);
     }
     printString(ST, EFI_GREEN, L"Chosen gop mode\r\n");
-    printFrameBufferInfo(ST, &frameBuffer);
-     
+    printFrameBufferInfo(ST, &(bootInfo->framebuffer));
+
     WaitForKeyPress(ST);
     return EFI_SUCCESS;
 }

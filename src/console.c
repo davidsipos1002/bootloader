@@ -68,7 +68,7 @@ EFI_STATUS printIntegerInHexadecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN In
         return EFI_SUCCESS;
     }
     while(digitcount < 16) {
-        UINTN digit = ((0xF << currentshift) & Integer) >> currentshift;
+        UINTN digit = (((uint64_t) 0xF << currentshift) & Integer) >> currentshift;
         if(!firstDigit && digit)
             firstDigit = true;
         if(firstDigit)
