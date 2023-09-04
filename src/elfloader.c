@@ -37,7 +37,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
     }
     if(!validateElfHeader(ST, &elfHeader))
         return EFI_LOAD_ERROR;
-    printElfHeader(ST, &elfHeader);
+    // printElfHeader(ST, &elfHeader);
     Status = kernelImage->SetPosition(kernelImage, elfHeader.e_phoff);
     if(Status != EFI_SUCCESS || sizeof(Elf64_Phdr) != elfHeader.e_phentsize)
     {
@@ -57,10 +57,10 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
            kernelImage->Close(kernelImage);
            return EFI_LOAD_ERROR; 
         }
-        printString(ST, EFI_WHITE, L"Program Header Table Entry ");
-        printIntegerInDecimal(ST, EFI_WHITE, i);
-        newLine(ST);
-        printElfProgramHeaderTable(ST, &pHeader);
+        // printString(ST, EFI_WHITE, L"Program Header Table Entry ");
+        // printIntegerInDecimal(ST, EFI_WHITE, i);
+        // newLine(ST);
+        // printElfProgramHeaderTable(ST, &pHeader);
         
         if(pHeader.p_align != 0x1000) {
             printString(ST, EFI_RED, L"Invalid alignment field\r\n");
