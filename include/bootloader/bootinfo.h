@@ -22,6 +22,7 @@ typedef struct
 typedef struct 
 {
     uint64_t efi_system_table;
+    uint64_t page_table;
     FrameBuffer framebuffer;
     MemoryMap memorymap; 
 } BootInfo;

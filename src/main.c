@@ -5,6 +5,13 @@
 #include <bootloader/paging.h>
 #include <bootloader/elfloader.h>
 #include <bootloader/memorymap.h>
+#include <bootloader/kerneljump.h>
+
+EFI_STATUS die(EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
+{
+    printString(ST, EFI_RED, Message);
+    return WaitForKeyPress(ST);
+}
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -19,59 +26,58 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 
     uint64_t *pml4 = pagingInit(ST);
     if(!pml4) 
-    {
-        printString(ST, EFI_RED, L"Could not initialize paging\r\n");
-        return WaitForKeyPress(ST);
-    }
+        return die(ST, L"Could not initialize paging\r\n");
     printString(ST, EFI_GREEN, L"Recursive paging initialized\r\n");
     printString(ST, EFI_GREEN, L"PML4 address ");
     printIntegerInHexadecimal(ST, EFI_GREEN, (uint64_t) pml4);
     newLine(ST);
 
-    if(EFI_ERROR(loadKernel(ST, ImageHandle, pml4)))
-    {
-        printString(ST, EFI_RED, L"Could not load kernel\r\n");
-        return WaitForKeyPress(ST);
-    }
-    printString(ST, EFI_GREEN, L"Kernel succesfully loaded and mapped\r\n");
+    uint64_t kernelEntry;
+    if(EFI_ERROR(loadKernel(ST, ImageHandle, pml4, &kernelEntry)))
+        return die(ST, L"Could not load kernel\r\n");
+    printString(ST, EFI_GREEN, L"Kernel succesfully loaded and mapped at ");
+    printIntegerInHexadecimal(ST, EFI_GREEN, kernelEntry);
+    newLine(ST);
 
     printString(ST, EFI_WHITE, L"BootInfo size: ");
     printIntegerInDecimal(ST, EFI_WHITE, sizeof(BootInfo));
     newLine(ST);
+    BootInfo *bootInfo = allocateZeroedPages(ST, 1);
+    if(bootInfo == NULL || !memoryMapPages(ST, pml4, (uint64_t) bootInfo, 0xFFFEFFFFFFFFF000, 1))
+        return die(ST, L"Could not allocate bootinfo\r\n");
 
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = getGop(ST);
     if(gop == NULL)
-    {
-        printString(ST, EFI_RED, L"Could not get gop\r\n");
-        return WaitForKeyPress(ST);
-    }
-    
-    BootInfo *bootInfo = allocateZeroedPages(ST, 1);
-    if(bootInfo == NULL || !memoryMapPages(ST, pml4, (uint64_t) bootInfo, 0xFFFEFFFFFFFFF000, 1))
-    {
-        printString(ST, EFI_RED, L"Could not allocate bootinfo\r\n");
-        return WaitForKeyPress(ST); 
-    }
-
+        return die(ST, L"Could not get gop\r\n");
     UINT32 gopMode = obtainGraphicsMode(gop, &(bootInfo->framebuffer));
     if(gopMode == UINT32_MAX)
-    {
-        printString(ST, EFI_RED, L"Could not get gop mode\r\n");
-        return WaitForKeyPress(ST);
-    }
+        return die(ST, L"Could not get gop mode\r\n");
     printString(ST, EFI_GREEN, L"Chosen gop mode\r\n");
     printFrameBufferInfo(ST, &(bootInfo->framebuffer));
+    
+    bootInfo->efi_system_table = (uint64_t) ST;
+    bootInfo->page_table = (uint64_t) pml4;
+
+    uint64_t kernelJump;
+    if(EFI_ERROR(loadKernelJump(ST, &kernelJump)))
+        return die(ST, L"Could not load KernelJump\r\n");
+    printString(ST, EFI_GREEN, L"Successfully loaded KernelJump at ");
+    printIntegerInHexadecimal(ST, EFI_GREEN, kernelJump);
+    newLine(ST);
+
+    printString(ST, EFI_YELLOW, L"Press any key to jump to kernel \r\n");
+    WaitForKeyPress(ST);
+
+    if(EFI_ERROR(gop->SetMode(gop, gopMode)))
+        return die(ST, L"Could not set gop mode\r\n");
 
     UINTN MapKey = getMemoryMap(ST, &(bootInfo->memorymap)); 
     if(MapKey == UINT64_MAX)
+        return EFI_LOAD_ERROR;
+    if(ST->BootServices->ExitBootServices(ImageHandle, MapKey))
     {
-        printString(ST, EFI_RED, L"Could not get memory map\r\n");
-        return WaitForKeyPress(ST);
+        KernelJump jump = (KernelJump) kernelJump;
+        jump(0xFFFEFFFFFFFFF000, (uint64_t) pml4, kernelEntry);
     }
-    printString(ST, EFI_GREEN, L"Successfully obtained memory map\r\n");
-    printMemoryMapInfo(ST, &(bootInfo->memorymap));
-    printMemoryMap(ST, &(bootInfo->memorymap));
-
-    WaitForKeyPress(ST);
     return EFI_SUCCESS;
 }
