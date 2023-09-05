@@ -4,6 +4,7 @@
 #include <bootloader/console.h>
 #include <bootloader/paging.h>
 #include <bootloader/elfloader.h>
+#include <bootloader/memorymap.h>
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
@@ -60,6 +61,16 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     }
     printString(ST, EFI_GREEN, L"Chosen gop mode\r\n");
     printFrameBufferInfo(ST, &(bootInfo->framebuffer));
+
+    UINTN MapKey = getMemoryMap(ST, &(bootInfo->memorymap)); 
+    if(MapKey == UINT64_MAX)
+    {
+        printString(ST, EFI_RED, L"Could not get memory map\r\n");
+        return WaitForKeyPress(ST);
+    }
+    printString(ST, EFI_GREEN, L"Successfully obtained memory map\r\n");
+    printMemoryMapInfo(ST, &(bootInfo->memorymap));
+    printMemoryMap(ST, &(bootInfo->memorymap));
 
     WaitForKeyPress(ST);
     return EFI_SUCCESS;
