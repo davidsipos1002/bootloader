@@ -9,7 +9,7 @@ set(includes include gnu-efi/inc gnu-efi/inc/x86_64 gnu-efi/inc/protocol ${CMAKE
 file(GLOB_RECURSE sources src/*.c src/kerneljump.s)
 list(APPEND sources gnu-efi/lib/data.c)
 
-set(BootInfo_Address 0xFFFEFFFFFFFFF000)
+set(BootInfo_Address 0xFFFFFF7FFFFFF000)
 
 option(basic_logging "Basic logging" ON)
 option(extensive_logging "Detailed logging")
