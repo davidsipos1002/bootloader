@@ -13,6 +13,7 @@ set(BootInfo_Address 0xFFFEFFFFFFFFF000)
 
 option(basic_logging "Basic logging" ON)
 option(extensive_logging "Detailed logging")
+option(print_elf "Print elf headers")
 option(print_memory_map "Print memory map from first call")
 
 add_executable(BOOTX64.EFI ${sources})
@@ -25,6 +26,10 @@ endif()
 
 if(extensive_logging)
     target_compile_definitions(BOOTX64.EFI PRIVATE EXTENSIVE_LOGGING)
+endif()
+
+if(print_elf)
+    target_compile_definitions(BOOTX64.EFI PRIVATE PRINT_ELF)
 endif()
 
 if(print_memory_map)

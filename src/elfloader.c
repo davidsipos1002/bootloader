@@ -37,7 +37,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
     }
     if(!validateElfHeader(ST, &elfHeader))
         return EFI_LOAD_ERROR;
-    #ifdef EXTENSIVE_LOGGING
+    #ifdef PRINT_ELF
         printElfHeader(ST, &elfHeader);
     #endif
     Status = kernelImage->SetPosition(kernelImage, elfHeader.e_phoff);
@@ -60,7 +60,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
            return EFI_LOAD_ERROR; 
         }
 
-        #ifdef EXTENSIVE_LOGGING
+        #ifdef PRINT_ELF
             printString(ST, EFI_WHITE, L"Program Header Table Entry ");
             printIntegerInDecimal(ST, EFI_WHITE, i);
             newLine(ST);
