@@ -43,7 +43,8 @@ EFI_STATUS printIntegerInDecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN Intege
     }
     CHAR16 buff[2];
     buff[1] = 0;
-    while(digit) {
+    while(digit) 
+    {
         buff[0] = (CHAR16) ((Integer / digit) % 10 + L'0');
         printString(ST, Color, buff);
         digit /= 10;
@@ -51,7 +52,8 @@ EFI_STATUS printIntegerInDecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN Intege
     return EFI_SUCCESS;
 }
 
-EFI_STATUS printIntegerInHexadecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN Integer) {
+EFI_STATUS printIntegerInHexadecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN Integer) 
+{
     UINTN currentshift = 60;
     UINTN digitcount = 0;
     bool firstDigit = false;
@@ -67,7 +69,8 @@ EFI_STATUS printIntegerInHexadecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN In
         printString(ST, Color, buff);
         return EFI_SUCCESS;
     }
-    while(digitcount < 16) {
+    while(digitcount < 16) 
+    {
         UINTN digit = (((uint64_t) 0xF << currentshift) & Integer) >> currentshift;
         if(!firstDigit && digit)
             firstDigit = true;
@@ -85,13 +88,12 @@ EFI_STATUS printIntegerInHexadecimal(EFI_SYSTEM_TABLE *ST, UINTN Color, UINTN In
     return EFI_SUCCESS;
 }
 
-EFI_STATUS WaitForKeyPress(EFI_SYSTEM_TABLE *ST) 
+EFI_STATUS waitForKeyPress(EFI_SYSTEM_TABLE *ST) 
 {
     EFI_INPUT_KEY Key;
     EFI_STATUS Status = ST->ConIn->Reset(ST->ConIn, FALSE);
     if (EFI_ERROR(Status))
         return Status;
- 
     while ((Status = ST->ConIn->ReadKeyStroke(ST->ConIn, &Key)) == EFI_NOT_READY);
     return Status;
 }

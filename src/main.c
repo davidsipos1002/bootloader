@@ -11,7 +11,7 @@
 EFI_STATUS die(EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
     printString(ST, EFI_RED, Message);
-    return WaitForKeyPress(ST);
+    return waitForKeyPress(ST);
 }
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
@@ -71,7 +71,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     newLine(ST);
 
     printString(ST, EFI_YELLOW, L"Press any key to jump to kernel \r\n");
-    WaitForKeyPress(ST);
+    waitForKeyPress(ST);
 
     if(EFI_ERROR(gop->SetMode(gop, gopMode)))
         return die(ST, L"Could not set gop mode\r\n");

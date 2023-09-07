@@ -1,5 +1,5 @@
-#ifndef ELF_H_INCLUDE
-#define ELF_H_INCLUDE
+#ifndef ELF_H_INCL
+#define ELF_H_INCL
 
 #include <stdint.h>
 

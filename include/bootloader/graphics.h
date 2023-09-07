@@ -1,5 +1,5 @@
-#ifndef GRAPHICS_H_INC
-#define GRPAHICS_H_INC
+#ifndef GRAPHICS_H_INCL
+#define GRPAHICS_H_INCL
 
 #include <efi.h>
 #include <efilib.h>

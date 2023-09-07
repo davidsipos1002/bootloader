@@ -10,10 +10,25 @@ file(GLOB_RECURSE sources src/*.c src/kerneljump.s)
 list(APPEND sources gnu-efi/lib/data.c)
 
 set(BootInfo_Address 0xFFFEFFFFFFFFF000)
-set(KernelJump_Address 0xFFFEFFFFFFFFE000)
+
+option(basic_logging "Basic logging" ON)
+option(extensive_logging "Detailed logging")
+option(print_memory_map "Print memory map from first call")
 
 add_executable(BOOTX64.EFI ${sources})
 configure_file(${CMAKE_SOURCE_DIR}/include/bootloader/bootloadercfg.h.in ${CMAKE_BINARY_DIR}/include/bootloader/bootloadercfg.h)
-target_include_directories(BOOTX64.EFI PUBLIC ${includes})
+target_include_directories(BOOTX64.EFI PRIVATE ${includes})
+
+if(basic_logging)
+    target_compile_definitions(BOOTX64.EFI PRIVATE BASIC_LOGGING)
+endif()
+
+if(extensive_logging)
+    target_compile_definitions(BOOTX64.EFI PRIVATE EXTENSIVE_LOGGING)
+endif()
+
+if(print_memory_map)
+    target_compile_definitions(BOOTX64.EFI PRIVATE PRINT_MEMORY_MAP)
+endif()
 
 install(TARGETS BOOTX64.EFI DESTINATION build/efi)

@@ -36,7 +36,9 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t *pdp;
     if(!pml4[i4]) {
         pdp = allocateZeroedPages(ST, 1);
-        // printString(ST, EFI_WHITE, L"Allocating new pdp\r\n");
+        #ifdef EXTENSIVE_LOGGING
+            printString(ST, EFI_WHITE, L"Allocating new Page Directory Pointer Table\r\n");
+        #endif
         if(!pdp)
             return false;
         pml4[i4] = (uint64_t) pdp | 0x3;
@@ -47,7 +49,9 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t *pd;
     if(!pdp[i3]) {
         pd = allocateZeroedPages(ST, 1);
-        // printString(ST, EFI_WHITE, L"Allocating new pd\r\n");
+        #ifdef EXTENSIVE_LOGGING
+            printString(ST, EFI_WHITE, L"Allocating new Page Directory Table\r\n");
+        #endif
         if(!pd)
             return false;
         pdp[i3] = (uint64_t) pd | 0x3;
@@ -58,7 +62,9 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t *pt;
     if(!pd[i2]) {
         pt = allocateZeroedPages(ST, 1);
-        // printString(ST, EFI_WHITE, L"Allocating new pt\r\n");
+        #ifdef EXTENSIVE_LOGGING
+            printString(ST, EFI_WHITE, L"Allocating new Page Table\r\n");
+        #endif
         if(!pt)
             return false;
         pd[i2] = (uint64_t) pt | 0x3;

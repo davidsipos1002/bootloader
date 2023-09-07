@@ -1,5 +1,5 @@
-#ifndef FILESYS_H_INC
-#define FILESYS_H_INC
+#ifndef FILESYS_H_INCL
+#define FILESYS_H_INCL
 
 #include <efi.h>
 #include <efilib.h>

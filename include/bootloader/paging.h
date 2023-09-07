@@ -1,5 +1,5 @@
-#ifndef PAGING_H_INC
-#define PAGING_H_INC
+#ifndef PAGING_H_INCL
+#define PAGING_H_INCL
 
 #include <efi.h>
 #include <efilib.h>
