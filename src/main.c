@@ -6,6 +6,7 @@
 #include <bootloader/elfloader.h>
 #include <bootloader/memorymap.h>
 #include <bootloader/kerneljump.h>
+#include <bootloader/bootloadercfg.h>
 
 EFI_STATUS die(EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
@@ -22,7 +23,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     if(EFI_ERROR(setConsoleMode(ST)))
         printString(ST, EFI_RED, L"Could not set console mode\r\n");
 
-    printString(ST, EFI_YELLOW, L"David's Bootloader\r\n");
+    printString(ST, EFI_YELLOW, L"David's Bootloader v");
+    printIntegerInDecimal(ST, EFI_YELLOW, BOOTLOADER_MAJOR);
+    printString(ST, EFI_YELLOW, L".");
+    printIntegerInDecimal(ST, EFI_YELLOW, BOOTLOADER_MINOR);
+    newLine(ST);
 
     uint64_t *pml4 = pagingInit(ST);
     if(!pml4) 
@@ -43,7 +48,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     printIntegerInDecimal(ST, EFI_WHITE, sizeof(BootInfo));
     newLine(ST);
     BootInfo *bootInfo = allocateZeroedPages(ST, 1);
-    if(bootInfo == NULL || !memoryMapPages(ST, pml4, (uint64_t) bootInfo, 0xFFFEFFFFFFFFF000, 1))
+    if(bootInfo == NULL || !memoryMapPages(ST, pml4, (uint64_t) bootInfo, BOOTLOADER_BOOTINFO_ADDRESS, 1))
         return die(ST, L"Could not allocate bootinfo\r\n");
 
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = getGop(ST);
@@ -59,7 +64,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     bootInfo->page_table = (uint64_t) pml4;
 
     uint64_t kernelJump;
-    if(EFI_ERROR(loadKernelJump(ST, &kernelJump)))
+    if(EFI_ERROR(loadKernelJump(ST, pml4, &kernelJump)))
         return die(ST, L"Could not load KernelJump\r\n");
     printString(ST, EFI_GREEN, L"Successfully loaded KernelJump at ");
     printIntegerInHexadecimal(ST, EFI_GREEN, kernelJump);
@@ -74,10 +79,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     UINTN MapKey = getMemoryMap(ST, &(bootInfo->memorymap)); 
     if(MapKey == UINT64_MAX)
         return EFI_LOAD_ERROR;
-    if(ST->BootServices->ExitBootServices(ImageHandle, MapKey))
-    {
-        KernelJump jump = (KernelJump) kernelJump;
-        jump(0xFFFEFFFFFFFFF000, (uint64_t) pml4, kernelEntry);
-    }
+ 
+    while((Status = ST->BootServices->ExitBootServices(ImageHandle, MapKey)) != EFI_SUCCESS) 
+        MapKey = getMemoryMap(ST, &(bootInfo->memorymap));
+
+    KernelJump jump = (KernelJump) kernelJump;
+    jump(BOOTLOADER_BOOTINFO_ADDRESS, (uint64_t) pml4, kernelEntry);
     return EFI_SUCCESS;
 }

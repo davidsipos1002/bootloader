@@ -6,6 +6,6 @@
 
 typedef void (*KernelJump) (uint64_t BootInfo, uint64_t PageTable, uint64_t KernelEntry);
 
-EFI_STATUS loadKernelJump(EFI_SYSTEM_TABLE *ST, uint64_t *kernelJump); 
+EFI_STATUS loadKernelJump(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t *kernelJump); 
 
 #endif

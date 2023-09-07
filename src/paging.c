@@ -12,7 +12,8 @@
 #define PT_INDEX_SHIFT   12
 #define PAGE_OFFSET_MASK 0x00000000000000FFF
 
-void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, UINTN numberOfPages) {
+void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, UINTN numberOfPages) 
+{
     EFI_PHYSICAL_ADDRESS ret;
     EFI_STATUS Status = ST->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, numberOfPages, &ret);
     if(EFI_ERROR(Status))
@@ -29,7 +30,8 @@ uint64_t* pagingInit(EFI_SYSTEM_TABLE *ST) {
     return ret;
 }
 
-bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr) {
+bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr) 
+{
     uint64_t i4 = (vaddr & PML4_INDEX_MASK) >> PML4_INDEX_SHIFT;
     uint64_t *pdp;
     if(!pml4[i4]) {
@@ -68,7 +70,8 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     return true;
 }
 
-bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr, uint64_t numberOfPages) {
+bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr, uint64_t numberOfPages) 
+{
     for(uint64_t i = 0;i < numberOfPages;i++) {
         printString(ST, EFI_WHITE, L"Mapping ");
         printIntegerInHexadecimal(ST, EFI_WHITE, paddr);
@@ -77,13 +80,14 @@ bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64
         newLine(ST);
         if(!memoryMapPage(ST, pml4, paddr, vaddr))
             return false;
-        paddr += 0x1000;
-        vaddr += 0x1000;
+        paddr += PAGE_SIZE;
+        vaddr += PAGE_SIZE;
     }
     return true;
 }
 
-uint64_t walkPageTables(uint64_t *pml4, uint64_t vaddr) {
+uint64_t walkPageTables(uint64_t *pml4, uint64_t vaddr) 
+{
     uint64_t i4 = (vaddr & PML4_INDEX_MASK) >> PML4_INDEX_SHIFT;
     uint64_t i3 = (vaddr & PDP_INDEX_MASK) >> PDP_INDEX_SHIFT;
     uint64_t i2 = (vaddr & PD_INDEX_MASK) >> PD_INDEX_SHIFT;
@@ -98,7 +102,13 @@ uint64_t walkPageTables(uint64_t *pml4, uint64_t vaddr) {
     return ret;
 }
 
-void testPaging(EFI_SYSTEM_TABLE *ST, uint64_t *pml4) {
+uint64_t getPageCount(uint64_t size)
+{
+    return size / PAGE_SIZE + (size % PAGE_SIZE != 0);
+}
+
+void testPaging(EFI_SYSTEM_TABLE *ST, uint64_t *pml4) 
+{
     printString(ST, EFI_GREEN, L"PML4 ADDRESS ");
     printIntegerInHexadecimal(ST, EFI_GREEN, (uint64_t) pml4);
     newLine(ST);

@@ -62,7 +62,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
         // newLine(ST);
         // printElfProgramHeaderTable(ST, &pHeader);
         
-        if(pHeader.p_align != 0x1000) {
+        if(pHeader.p_align != PAGE_SIZE) {
             printString(ST, EFI_RED, L"Invalid alignment field\r\n");
             return EFI_LOAD_ERROR;
         }
@@ -94,10 +94,6 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
     }
     *kernelEntry = elfHeader.e_entry;
     return EFI_SUCCESS;
-}
-
-uint64_t getPageCount(Elf64_XWord p_memsz) {
-    return p_memsz / 0x1000 + (p_memsz % 0x1000 != 0);
 }
 
 bool validateElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader)
