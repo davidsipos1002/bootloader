@@ -10,7 +10,7 @@ EFI_STATUS loadKernelJump(EFI_SYSTEM_TABLE *ST, uint64_t* pml4, uint64_t *kernel
 {
     uint64_t size = _KernelJumpEnd - _KernelJumpStart;
     uint64_t pageCount = getPageCount(size);
-    void *ptr = allocateZeroedPages(ST, pageCount);
+    void *ptr = allocateZeroedPages(ST, EfiLoaderCode, pageCount);
     if(!ptr)
         return EFI_LOAD_ERROR;
     for(int i = 0;i < size;i++)

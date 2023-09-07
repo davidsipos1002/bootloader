@@ -77,7 +77,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
         }
         uint64_t pageCount = getPageCount(pHeader.p_memsz);
         uint64_t alignedVAddr = pHeader.p_vaddr & (~0xFFF);
-        uint64_t *segment = allocateZeroedPages(ST, pageCount); 
+        uint64_t *segment = allocateZeroedPages(ST, EfiLoaderData, pageCount); 
         if(segment == NULL)
         {
             printString(ST, EFI_RED, L"Could not allocate pages\r\n");

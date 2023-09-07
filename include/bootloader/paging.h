@@ -8,7 +8,7 @@
 
 #define PAGE_SIZE 0x1000
 
-void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, UINTN numberOfPages);
+void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, EFI_MEMORY_TYPE memoryType, UINTN numberOfPages);
 uint64_t* pagingInit(EFI_SYSTEM_TABLE *ST);
 bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr, uint64_t numberOfPages);
 uint64_t walkPageTables(uint64_t *pml4, uint64_t vaddr);

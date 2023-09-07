@@ -12,10 +12,10 @@
 #define PT_INDEX_SHIFT   12
 #define PAGE_OFFSET_MASK 0x00000000000000FFF
 
-void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, UINTN numberOfPages) 
+void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, EFI_MEMORY_TYPE memoryType, UINTN numberOfPages) 
 {
     EFI_PHYSICAL_ADDRESS ret;
-    EFI_STATUS Status = ST->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, numberOfPages, &ret);
+    EFI_STATUS Status = ST->BootServices->AllocatePages(AllocateAnyPages, memoryType, numberOfPages, &ret);
     if(EFI_ERROR(Status))
         return NULL;
     memset((void *) ret, 0, numberOfPages * PAGE_SIZE);
@@ -23,7 +23,7 @@ void* allocateZeroedPages(EFI_SYSTEM_TABLE *ST, UINTN numberOfPages)
 }
 
 uint64_t* pagingInit(EFI_SYSTEM_TABLE *ST) {
-    uint64_t *ret = (uint64_t *) allocateZeroedPages(ST, 1);
+    uint64_t *ret = (uint64_t *) allocateZeroedPages(ST, EfiLoaderData, 1);
     if(ret == NULL)
         return false;
     ret[511] = (uint64_t) ret | 0x3;
@@ -35,7 +35,7 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t i4 = (vaddr & PML4_INDEX_MASK) >> PML4_INDEX_SHIFT;
     uint64_t *pdp;
     if(!pml4[i4]) {
-        pdp = allocateZeroedPages(ST, 1);
+        pdp = allocateZeroedPages(ST, EfiLoaderData, 1);
         #ifdef EXTENSIVE_LOGGING
             printString(ST, EFI_WHITE, L"Allocating new Page Directory Pointer Table at ");
             printIntegerInHexadecimal(ST, EFI_WHITE, (uint64_t) pdp);
@@ -50,7 +50,7 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t i3 = (vaddr & PDP_INDEX_MASK) >> PDP_INDEX_SHIFT;
     uint64_t *pd;
     if(!pdp[i3]) {
-        pd = allocateZeroedPages(ST, 1);
+        pd = allocateZeroedPages(ST, EfiLoaderData, 1);
         #ifdef EXTENSIVE_LOGGING
             printString(ST, EFI_WHITE, L"Allocating new Page Directory Table at ");
             printIntegerInHexadecimal(ST, EFI_WHITE, (uint64_t) pd);
@@ -65,7 +65,7 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
     uint64_t i2 = (vaddr & PD_INDEX_MASK) >> PD_INDEX_SHIFT;
     uint64_t *pt;
     if(!pd[i2]) {
-        pt = allocateZeroedPages(ST, 1);
+        pt = allocateZeroedPages(ST, EfiLoaderData, 1);
         #ifdef EXTENSIVE_LOGGING
             printString(ST, EFI_WHITE, L"Allocating new Page Table at ");
             printIntegerInHexadecimal(ST, EFI_WHITE, (uint64_t) pt);

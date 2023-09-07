@@ -60,7 +60,7 @@ void setupBootInfo(BootContext *bootContext)
         printIntegerInDecimal(bootContext->ST, EFI_WHITE, sizeof(BootInfo));
         newLine(bootContext->ST);
     #endif
-    BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, 1);
+    BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiLoaderData, getPageCount(sizeof(BootInfo)));
     if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, BOOTLOADER_BOOTINFO_ADDRESS, 1))
         die(bootContext->ST, L"Could not allocate bootinfo\r\n");
     bootInfo->page_table = (uint64_t) bootContext->pml4;
