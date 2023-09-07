@@ -85,11 +85,13 @@ bool memoryMapPage(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_
 bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr, uint64_t numberOfPages) 
 {
     for(uint64_t i = 0;i < numberOfPages;i++) {
-        printString(ST, EFI_WHITE, L"Mapping ");
-        printIntegerInHexadecimal(ST, EFI_WHITE, paddr);
-        printString(ST, EFI_WHITE, L" to ");
-        printIntegerInHexadecimal(ST, EFI_WHITE, vaddr);
-        newLine(ST);
+        #ifdef EXTENSIVE_LOGGING
+            printString(ST, EFI_WHITE, L"Mapping ");
+            printIntegerInHexadecimal(ST, EFI_WHITE, paddr);
+            printString(ST, EFI_WHITE, L" to ");
+            printIntegerInHexadecimal(ST, EFI_WHITE, vaddr);
+            newLine(ST);
+        #endif
         if(!memoryMapPage(ST, pml4, paddr, vaddr))
             return false;
         paddr += PAGE_SIZE;

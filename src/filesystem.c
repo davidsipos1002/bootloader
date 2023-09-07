@@ -1,4 +1,5 @@
 #include <bootloader/filesystem.h>
+#include <bootloader/console.h>
 
 EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST) 
 {
@@ -10,13 +11,13 @@ EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST)
     EFI_STATUS Status = ST->BootServices->HandleProtocol(Image, &lipGuid, (VOID **) &loaded_image); 
     if(Status != EFI_SUCCESS) 
     {
-        ST->ConOut->OutputString(ST->ConOut, L"Could not obtain EFI_LOADED_IMAGE_PROTOCOL");
+        printString(ST, EFI_RED, L"Could not obtain EFI_LOADED_IMAGE_PROTOCOL");
         return NULL;
     }
     Status = ST->BootServices->HandleProtocol(loaded_image->DeviceHandle, &fsGuid, (VOID **) &IOVolume);
     if(Status != EFI_SUCCESS) 
     {
-        ST->ConOut->OutputString(ST->ConOut, L"Could not obtain EFI_FILE_SYSTEM_PROTOCOL");
+        printString(ST, EFI_RED, L"Could not obtain EFI_FILE_SYSTEM_PROTOCOL");
         return NULL;
     }
     Status = IOVolume->OpenVolume(IOVolume, &Volume);
