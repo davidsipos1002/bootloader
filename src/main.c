@@ -64,6 +64,11 @@ void setupBootInfo(BootContext *bootContext)
     if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, BOOTLOADER_BOOTINFO_ADDRESS, 1))
         die(bootContext->ST, L"Could not allocate bootinfo\r\n");
     bootInfo->page_table = (uint64_t) bootContext->pml4;
+    #ifdef BASIC_LOGGING
+        printString(bootContext->ST, EFI_GREEN, L"BootInfo successfully allocated and mapped at ");
+        printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, BOOTLOADER_BOOTINFO_ADDRESS);
+        newLine(bootContext->ST);
+    #endif
     bootContext->bootInfo = bootInfo;
 }
 
@@ -92,7 +97,7 @@ void prepareKernelJump(BootContext *bootContext)
     if(EFI_ERROR(loadKernelJump(bootContext->ST, bootContext->pml4, &kernelJump)))
         die(bootContext->ST, L"Could not load KernelJump\r\n");
     #ifdef BASIC_LOGGING
-        printString(bootContext->ST, EFI_GREEN, L"Successfully loaded KernelJump at ");
+        printString(bootContext->ST, EFI_GREEN, L"KernelJump successfully loaded and mapped at ");
         printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, kernelJump);
         newLine(bootContext->ST);
     #endif
@@ -107,6 +112,7 @@ void obtainInitialMemoryMap(BootContext *bootContext)
     bootContext->MemoryMapKey = MapKey;
     #ifdef BASIC_LOGGING
         printMemoryMapInfo(bootContext->ST, &(bootContext->bootInfo->memorymap));
+        printString(bootContext->ST, EFI_GREEN, L"Memory map successfully obtained\r\n");
     #endif
     #ifdef PRINT_MEMORY_MAP
         printMemoryMap(bootContext->ST, &(bootContext->bootInfo->memorymap));
@@ -115,7 +121,6 @@ void obtainInitialMemoryMap(BootContext *bootContext)
 
 void displayFinalMessage(BootContext *bootContext)
 {
-    printString(bootContext->ST, EFI_GREEN, L"All looks good\r\n");
     printString(bootContext->ST, EFI_YELLOW, L"Press any key to jump to kernel...\r\n");
     waitForKeyPress(bootContext->ST);
 }

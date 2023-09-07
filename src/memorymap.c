@@ -5,7 +5,9 @@
 UINTN getMemoryMap(EFI_SYSTEM_TABLE *ST, MemoryMap *memoryMap)
 {
     UINTN MemoryMapSize = PAGE_SIZE;
-    EFI_MEMORY_DESCRIPTOR *MemoryMapPointer = allocateZeroedPages(ST, EfiLoaderData, 1);
+    EFI_MEMORY_DESCRIPTOR *MemoryMapPointer = (EFI_MEMORY_DESCRIPTOR *) memoryMap->map;
+    if(!MemoryMapPointer)
+        MemoryMapPointer = allocateZeroedPages(ST, EfiLoaderData, 1);
     UINTN MapKey;
     UINTN DescriptorSize;
     UINT32 DescriptorVersion;
