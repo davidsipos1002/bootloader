@@ -14,6 +14,17 @@ EFI_STATUS die(EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
     return waitForKeyPress(ST);
 }
 
+void clearEfiSystemTable(EFI_SYSTEM_TABLE *ST)
+{
+    ST->ConsoleInHandle = NULL;
+    ST->ConIn = NULL;
+    ST->ConsoleOutHandle = NULL;
+    ST->ConOut = NULL;
+    ST->StandardErrorHandle = NULL;
+    ST->StdErr = NULL;
+    ST->BootServices = NULL;
+}
+
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_STATUS Status;
@@ -82,7 +93,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
  
     while((Status = ST->BootServices->ExitBootServices(ImageHandle, MapKey)) != EFI_SUCCESS) 
         MapKey = getMemoryMap(ST, &(bootInfo->memorymap));
-
+    clearEfiSystemTable(ST);
     KernelJump jump = (KernelJump) kernelJump;
     jump(BOOTLOADER_BOOTINFO_ADDRESS, (uint64_t) pml4, kernelEntry);
     return EFI_SUCCESS;
