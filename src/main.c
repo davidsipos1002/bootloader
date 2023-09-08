@@ -9,10 +9,10 @@
 #include <bootloader/bootloadercfg.h>
 #include <bootloader/bootcontext.h>
 
-EFI_STATUS die(EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
+EFI_STATUS die(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
     printString(ST, EFI_RED, Message);
-    return waitForKeyPress(ST);
+    ST->BootServices->Exit(ImageHandle, EFI_LOAD_ERROR, 0, NULL);
 }
 
 void setupConsole(BootContext *bootContext)
@@ -30,7 +30,7 @@ void initializePaging(BootContext *bootContext)
 {
     uint64_t *pml4 = pagingInit(bootContext->ST);
     if(!pml4) 
-        die(bootContext->ST, L"Could not initialize paging\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not initialize paging\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Recursive paging initialized\r\n");
         printString(bootContext->ST, EFI_GREEN, L"PML4 address ");
@@ -44,7 +44,7 @@ void loadAndMapKernel(BootContext *bootContext)
 {
     uint64_t kernelEntry;
     if(EFI_ERROR(loadKernel(bootContext->ST, bootContext->ImageHandle, bootContext->pml4, &kernelEntry)))
-        die(bootContext->ST, L"Could not load kernel\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not load kernel\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Kernel succesfully loaded and mapped at ");
         printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, kernelEntry);
@@ -62,8 +62,7 @@ void setupBootInfo(BootContext *bootContext)
     #endif
     BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiLoaderData, getPageCount(sizeof(BootInfo)));
     if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, BOOTLOADER_BOOTINFO_ADDRESS, 1))
-        die(bootContext->ST, L"Could not allocate bootinfo\r\n");
-    bootInfo->page_table = (uint64_t) bootContext->pml4;
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not allocate bootinfo\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"BootInfo successfully allocated and mapped at ");
         printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, BOOTLOADER_BOOTINFO_ADDRESS);
@@ -76,13 +75,13 @@ void setupGop(BootContext *bootContext)
 {
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = getGop(bootContext->ST);
     if(gop == NULL)
-        die(bootContext->ST, L"Could not get gop\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not get gop\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Obtained gop\r\n");
     #endif
     UINT32 gopMode = obtainGraphicsMode(gop, &(bootContext->bootInfo->framebuffer));
     if(gopMode == UINT32_MAX)
-        die(bootContext->ST, L"Could not get gop mode\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not get gop mode\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Chosen gop mode\r\n");
         printFrameBufferInfo(bootContext->ST, &(bootContext->bootInfo->framebuffer));
@@ -95,7 +94,7 @@ void prepareKernelJump(BootContext *bootContext)
 {
     uint64_t kernelJump;
     if(EFI_ERROR(loadKernelJump(bootContext->ST, bootContext->pml4, &kernelJump)))
-        die(bootContext->ST, L"Could not load KernelJump\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not load KernelJump\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"KernelJump successfully loaded and mapped at ");
         printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, kernelJump);
@@ -108,7 +107,7 @@ void obtainInitialMemoryMap(BootContext *bootContext)
 {
     UINTN MapKey = getMemoryMap(bootContext->ST, &(bootContext->bootInfo->memorymap));
     if(MapKey == UINT64_MAX)
-        die(bootContext->ST, L"Could not get initial memory map\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not get initial memory map\r\n");
     bootContext->MemoryMapKey = MapKey;
     #ifdef BASIC_LOGGING
         printMemoryMapInfo(bootContext->ST, &(bootContext->bootInfo->memorymap));
@@ -128,7 +127,7 @@ void displayFinalMessage(BootContext *bootContext)
 void setDisplayMode(BootContext *bootContext)
 {
     if(EFI_ERROR(bootContext->gop->SetMode(bootContext->gop, bootContext->gopMode)))
-        die(bootContext->ST, L"Could not set gop mode\r\n");
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not set gop mode\r\n");
 }
 
 void exitBootServices(BootContext *bootContext)
