@@ -1,5 +1,6 @@
 #include <bootloader/filesystem.h>
 #include <bootloader/console.h>
+#include <bootloader/bootloadercfg.h>
 
 EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST) 
 {
@@ -31,5 +32,5 @@ EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST)
 EFI_STATUS openKernelImage(EFI_FILE_HANDLE rootDirectory, EFI_FILE_HANDLE *kernelImage) 
 {
     return rootDirectory->Open(rootDirectory, kernelImage, 
-        L"\\EFI\\KERNEL\\kernel", EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+        KERNEL_PATH, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
 } 

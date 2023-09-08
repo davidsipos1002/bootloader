@@ -10,11 +10,16 @@ file(GLOB_RECURSE sources src/*.c src/kerneljump.s)
 list(APPEND sources gnu-efi/lib/data.c)
 
 set(BootInfo_Address 0xFFFFFF7FFFFFF000)
+set(Kernel_Path \\\\EFI\\\\KERNEL\\\\kernel)
 
 option(basic_logging "Basic logging" ON)
 option(extensive_logging "Detailed logging")
 option(print_elf "Print elf headers")
 option(print_memory_map "Print memory map from first call")
+
+message(Configration:)
+message(BootInfo_Address=${BootInfo_Address})
+message(Kernel_Path=${Kernel_Path})
 
 add_executable(BOOTX64.EFI ${sources})
 configure_file(${CMAKE_SOURCE_DIR}/include/bootloader/bootloadercfg.h.in ${CMAKE_BINARY_DIR}/include/bootloader/bootloadercfg.h)

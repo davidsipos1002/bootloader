@@ -9,7 +9,7 @@ _KernelJumpStart:
     //%rdx page_table
     //%r8 kernel_entry
     //System V ABI (Kernel ABI)
-    //rdi first parameter is BootInfo struct
+    //%rdi first parameter is BootInfo struct
     cli
     mov %rdx, %cr3
     mov %rcx, %rdi

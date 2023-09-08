@@ -5,5 +5,6 @@
 #define BOOTLOADER_MINOR @Bootloader_VERSION_MINOR@
 
 #define BOOTLOADER_BOOTINFO_ADDRESS @BootInfo_Address@
+#define KERNEL_PATH L"@Kernel_Path@"
 
 #endif
