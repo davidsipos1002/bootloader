@@ -29,8 +29,13 @@ EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST)
     return Volume;
 }
 
-EFI_STATUS openKernelImage(EFI_FILE_HANDLE rootDirectory, EFI_FILE_HANDLE *kernelImage) 
+EFI_STATUS openFileForRead(EFI_FILE_HANDLE rootDirectory, CHAR16 *path, EFI_FILE_HANDLE *fileHandle) 
 {
-    return rootDirectory->Open(rootDirectory, kernelImage, 
-        KERNEL_PATH, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    return rootDirectory->Open(rootDirectory, fileHandle, 
+        path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
 } 
+
+EFI_STATUS closeFileHandle(EFI_FILE_HANDLE fileHandle)
+{
+    return fileHandle->Close(fileHandle);
+}

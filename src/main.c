@@ -8,6 +8,7 @@
 #include <bootloader/kerneljump.h>
 #include <bootloader/bootloadercfg.h>
 #include <bootloader/bootcontext.h>
+#include <bootloader/filesystem.h>
 
 EFI_STATUS die(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
@@ -43,7 +44,7 @@ void initializePaging(BootContext *bootContext)
 void loadAndMapKernel(BootContext *bootContext)
 {
     uint64_t kernelEntry;
-    if(EFI_ERROR(loadKernel(bootContext->ST, bootContext->ImageHandle, bootContext->pml4, &kernelEntry)))
+    if(EFI_ERROR(loadKernel(bootContext->ST, bootContext->rootDirectory, bootContext->pml4, &kernelEntry)))
         die(bootContext->ImageHandle, bootContext->ST, L"Could not load kernel\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Kernel succesfully loaded and mapped at ");
@@ -132,6 +133,7 @@ void setDisplayMode(BootContext *bootContext)
 
 void exitBootServices(BootContext *bootContext)
 {
+    closeFileHandle(bootContext->rootDirectory);
     UINTN MapKey = bootContext->MemoryMapKey;
     while(bootContext->ST->BootServices->ExitBootServices(bootContext->ImageHandle, MapKey) != EFI_SUCCESS) 
         MapKey = getMemoryMap(bootContext->ST, &(bootContext->bootInfo->memorymap));
@@ -161,6 +163,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     BootContext bootContext;
     bootContext.ImageHandle = ImageHandle;
     bootContext.ST = SystemTable;
+    bootContext.rootDirectory = getRootDirectory(ImageHandle, SystemTable);
 
     setupConsole(&bootContext);
 

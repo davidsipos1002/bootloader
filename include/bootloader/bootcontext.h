@@ -10,6 +10,7 @@ typedef struct
 {
     EFI_HANDLE ImageHandle;
     EFI_SYSTEM_TABLE *ST;
+    EFI_FILE_HANDLE rootDirectory;
     uint64_t *pml4;
     uint64_t kernelEntry;
     BootInfo *bootInfo;
