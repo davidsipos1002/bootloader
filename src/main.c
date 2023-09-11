@@ -10,6 +10,7 @@
 #include <bootloader/bootcontext.h>
 #include <bootloader/filesystem.h>
 #include <bootloader/config.h>
+#include <bootloader/memory.h>
 
 EFI_STATUS die(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
@@ -28,6 +29,21 @@ void setupConsole(BootContext *bootContext)
     newLine(bootContext->ST);
 }
 
+void obtainBootConfiguration(BootContext *bootContext)
+{
+    BootConfig *bootConfig = parseConfigurationFile(bootContext->ST, bootContext->rootDirectory);
+    if(bootConfig == NULL)
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not parse boot configuration file\r\n");
+    #ifdef BASIC_LOGGING
+        printString(bootContext->ST, EFI_GREEN, L"Boot configuration file successfully parsed\r\n");
+    #endif
+    #ifdef PRINT_CONFIG
+        printString(bootContext->ST, EFI_GREEN, L"Chosen boot configuration\r\n");
+        printBootConfig(bootContext->ST, bootConfig);
+    #endif
+    bootContext->bootConfig = bootConfig;
+}
+
 void initializePaging(BootContext *bootContext)
 {
     uint64_t *pml4 = pagingInit(bootContext->ST);
@@ -44,14 +60,17 @@ void initializePaging(BootContext *bootContext)
 
 void loadAndMapKernel(BootContext *bootContext)
 {
+    CHAR16 *kernelPath = alloc(bootContext->ST, bootContext->bootConfig->kernelPathLength * sizeof(CHAR16));
+    toWidechar(bootContext->bootConfig->kernelPath, kernelPath, bootContext->bootConfig->kernelPathLength);
     uint64_t kernelEntry;
-    if(EFI_ERROR(loadKernel(bootContext->ST, bootContext->rootDirectory, bootContext->pml4, &kernelEntry)))
+    if(EFI_ERROR(loadKernel(bootContext->ST, bootContext->rootDirectory, kernelPath, bootContext->pml4, &kernelEntry)))
         die(bootContext->ImageHandle, bootContext->ST, L"Could not load kernel\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"Kernel succesfully loaded and mapped at ");
         printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, kernelEntry);
         newLine(bootContext->ST);
     #endif
+    free(bootContext->ST, kernelPath);
     bootContext->kernelEntry = kernelEntry;
 }
 
@@ -63,11 +82,11 @@ void setupBootInfo(BootContext *bootContext)
         newLine(bootContext->ST);
     #endif
     BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiLoaderData, getPageCount(sizeof(BootInfo)));
-    if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, 0xFFFFFF7FFFFFF000, 1))
+    if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, bootContext->bootConfig->bootInfoVirtualAddress, 1))
         die(bootContext->ImageHandle, bootContext->ST, L"Could not allocate bootinfo\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"BootInfo successfully allocated and mapped at ");
-        printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, 0xFFFFFF7FFFFFF000);
+        printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, bootContext->bootConfig->bootInfoVirtualAddress);
         newLine(bootContext->ST);
     #endif
     bootContext->bootInfo = bootInfo;
@@ -134,6 +153,7 @@ void setDisplayMode(BootContext *bootContext)
 
 void exitBootServices(BootContext *bootContext)
 {
+    free(bootContext->ST, bootContext->bootConfig);
     closeFileHandle(bootContext->rootDirectory);
     UINTN MapKey = bootContext->MemoryMapKey;
     while(bootContext->ST->BootServices->ExitBootServices(bootContext->ImageHandle, MapKey) != EFI_SUCCESS) 
@@ -167,10 +187,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     bootContext.rootDirectory = getRootDirectory(ImageHandle, SystemTable);
 
     setupConsole(&bootContext);
-    #ifdef DEBUG_BUILD
-        BootConfig *cfg = parseConfigurationFile(SystemTable, bootContext.rootDirectory);
-        freeBootConfig(SystemTable, cfg);
-    #endif
+
+    obtainBootConfiguration(&bootContext);
 
     initializePaging(&bootContext);
 

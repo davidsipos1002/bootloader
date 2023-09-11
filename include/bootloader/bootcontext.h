@@ -4,10 +4,12 @@
 #include <efi.h>
 #include <efilib.h>
 #include <stdint.h>
+#include <bootloader/config.h>
 #include <bootloader/bootinfo.h>
 
 typedef struct 
 {
+    BootConfig *bootConfig;
     EFI_HANDLE ImageHandle;
     EFI_SYSTEM_TABLE *ST;
     EFI_FILE_HANDLE rootDirectory;

@@ -11,11 +11,12 @@ void printElfHeader(EFI_SYSTEM_TABLE *ST, Elf64_Ehdr *elfHeader);
 void printElfProgramHeaderTable(EFI_SYSTEM_TABLE *ST, Elf64_Phdr *programHeaderEntry);
 uint64_t getPageCount(Elf64_XWord p_memsz);
 
-EFI_STATUS loadKernel(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE rootDirectory, uint64_t *pml4, uint64_t *kernelEntry) {
+EFI_STATUS loadKernel(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE rootDirectory, CHAR16* kernelPath, uint64_t *pml4, uint64_t *kernelEntry) 
+{
     if(rootDirectory == NULL) 
         return EFI_LOAD_ERROR;
     EFI_FILE_HANDLE kernelImage;
-    EFI_STATUS Status = openFileForRead(rootDirectory, L"\\EFI\\KERNEL\\kernel", &kernelImage);
+    EFI_STATUS Status = openFileForRead(rootDirectory, kernelPath, &kernelImage);
     if(Status != EFI_SUCCESS)
         return EFI_LOAD_ERROR;
     if(EFI_ERROR(loadElf(ST, kernelImage, pml4, kernelEntry)))
@@ -23,7 +24,8 @@ EFI_STATUS loadKernel(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE rootDirectory, uint6
     return EFI_SUCCESS;
 }
 
-EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *pml4, uint64_t *kernelEntry) {
+EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *pml4, uint64_t *kernelEntry) 
+{
     Elf64_Ehdr elfHeader;
     UINTN BufferSize = sizeof(elfHeader);
     EFI_STATUS Status = kernelImage->Read(kernelImage, &BufferSize, &elfHeader);
