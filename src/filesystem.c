@@ -1,5 +1,7 @@
 #include <bootloader/filesystem.h>
 #include <bootloader/console.h>
+#include <bootloader/paging.h>
+#include <bootloader/memory.h>
 
 EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST) 
 {
@@ -26,6 +28,40 @@ EFI_FILE_HANDLE getRootDirectory(EFI_HANDLE Image, EFI_SYSTEM_TABLE *ST)
         return NULL;
     }
     return Volume;
+}
+
+uint64_t getFileSize(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE fileHandle)
+{
+    void *buffer = alloc(ST, 256);
+    UINTN bufferSize = 256;
+    EFI_GUID fileInfoGuid = EFI_FILE_INFO_ID;
+    while(EFI_ERROR(fileHandle->GetInfo(fileHandle, &fileInfoGuid, &bufferSize, buffer)))
+    {
+        free(ST, buffer);
+        buffer = alloc(ST, bufferSize);
+    }
+    uint64_t fileSize = ((EFI_FILE_INFO *) buffer)->FileSize;
+    free(ST, buffer);
+    return fileSize;
+}
+
+uint64_t loadFileToMemory(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE rootDirectory, CHAR16 *filePath, uint64_t *pageCount) 
+{
+    EFI_FILE_HANDLE fileHandle;
+    if(EFI_ERROR(openFileForRead(rootDirectory, filePath, &fileHandle)))
+        return 0;
+    uint64_t fileSize = getFileSize(ST, fileHandle);
+    *pageCount = getPageCount(fileSize);
+    void *buffer = allocateZeroedPages(ST, EfiLoaderData, *pageCount);
+    UINTN bufferSize = *pageCount * PAGE_SIZE;
+    EFI_STATUS Status = fileHandle->Read(fileHandle, &bufferSize, buffer);
+    closeFileHandle(fileHandle);
+    if(EFI_ERROR(Status))
+    {
+        ST->BootServices->FreePages((EFI_PHYSICAL_ADDRESS) buffer, *pageCount);
+        return 0;
+    }
+    return (uint64_t) buffer;
 }
 
 EFI_STATUS openFileForRead(EFI_FILE_HANDLE rootDirectory, CHAR16 *path, EFI_FILE_HANDLE *fileHandle) 
