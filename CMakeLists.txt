@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.27)
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/Toolchain.cmake)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/)
 
-project(Bootloader VERSION 0.2 LANGUAGES ASM C)
+project(Bootloader VERSION 0.3 LANGUAGES ASM C)
 
 set(includes include gnu-efi/inc gnu-efi/inc/x86_64 gnu-efi/inc/protocol ${CMAKE_BINARY_DIR}/include)
 file(GLOB_RECURSE sources src/*.c src/kerneljump.s)
