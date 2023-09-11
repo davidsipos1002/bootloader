@@ -15,6 +15,7 @@
 EFI_STATUS die(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
     printString(ST, EFI_RED, Message);
+    waitForKeyPress(ST);
     ST->BootServices->Exit(ImageHandle, EFI_LOAD_ERROR, 0, NULL);
 }
 
@@ -72,6 +73,34 @@ void loadAndMapKernel(BootContext *bootContext)
     #endif
     free(bootContext->ST, kernelPath);
     bootContext->kernelEntry = kernelEntry;
+}
+
+void loadInitialDataFiles(BootContext *bootContext)
+{
+    InitialDataFile *currentFile;
+    for(uint32_t i = 0;i < bootContext->bootConfig->dataFileCount;i++)
+    {
+        currentFile = &(bootContext->bootConfig->dataFiles[i]);
+        CHAR16 *filePath = alloc(bootContext->ST, currentFile->filePathLength * sizeof(CHAR16));
+        toWidechar(currentFile->filePath, filePath, currentFile->filePathLength);
+        uint64_t pageCount;
+        uint64_t filePhysicalAddress = loadFileToMemory(bootContext->ST, bootContext->rootDirectory, filePath, &pageCount);
+        if(!filePhysicalAddress)
+            die(bootContext->ImageHandle, bootContext->ST, L"Could load initial data file\r\n");
+        if(!memoryMapPages(bootContext->ST, bootContext->pml4, filePhysicalAddress, currentFile->loadVirtualAddress, pageCount))
+            die(bootContext->ImageHandle, bootContext->ST, L"Could not memory map initial data file\r\n");
+        #ifdef BASIC_LOGGING
+            printString(bootContext->ST, EFI_GREEN, L"File ");
+            printString(bootContext->ST, EFI_GREEN, filePath);
+            printString(bootContext->ST, EFI_GREEN, L" loaded and mapped at ");
+            printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, currentFile->loadVirtualAddress);
+            newLine(bootContext->ST);
+        #endif
+        free(bootContext->ST, filePath);
+    }
+    #ifdef BASIC_LOGGING
+        printString(bootContext->ST, EFI_GREEN, L"Initial data files loaded and mapped successfully\r\n");
+    #endif
 }
 
 void setupBootInfo(BootContext *bootContext)
@@ -193,6 +222,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     initializePaging(&bootContext);
 
     loadAndMapKernel(&bootContext);
+
+    loadInitialDataFiles(&bootContext);
 
     setupBootInfo(&bootContext);
 
