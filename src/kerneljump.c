@@ -1,7 +1,6 @@
 #include <bootloader/kerneljump.h>
 #include <bootloader/paging.h> 
 #include <bootloader/console.h>
-#include <bootloader/bootloadercfg.h>
 
 extern const char _KernelJumpStart[];
 extern const char _KernelJumpEnd[];

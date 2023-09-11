@@ -1,0 +1,7 @@
+#ifndef VERSION_H_INCL
+#define VERSION_H_INCL
+
+#define BOOTLOADER_MAJOR @Bootloader_VERSION_MAJOR@
+#define BOOTLOADER_MINOR @Bootloader_VERSION_MINOR@
+
+#endif

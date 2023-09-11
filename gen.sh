@@ -9,5 +9,7 @@ mformat -i img/bootloader.img -f 1440 ::
 mmd -i img/bootloader.img ::/EFI
 mmd -i img/bootloader.img ::/EFI/BOOT
 mmd -i img/bootloader.img ::/EFI/KERNEL
+mmd -i img/bootloader.img ::/config
 mcopy -i img/bootloader.img efi/BOOTX64.EFI ::/EFI/BOOT
 mcopy -i img/bootloader.img kernel/kernel ::/EFI/KERNEL
+mcopy -i img/bootloader.img config/boot.cfg ::/config

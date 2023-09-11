@@ -6,9 +6,10 @@
 #include <bootloader/elfloader.h>
 #include <bootloader/memorymap.h>
 #include <bootloader/kerneljump.h>
-#include <bootloader/bootloadercfg.h>
+#include <bootloader/version.h>
 #include <bootloader/bootcontext.h>
 #include <bootloader/filesystem.h>
+#include <bootloader/config.h>
 
 EFI_STATUS die(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *ST, CHAR16 *Message)
 {
@@ -62,11 +63,11 @@ void setupBootInfo(BootContext *bootContext)
         newLine(bootContext->ST);
     #endif
     BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiLoaderData, getPageCount(sizeof(BootInfo)));
-    if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, BOOTLOADER_BOOTINFO_ADDRESS, 1))
+    if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, 0xFFFFFF7FFFFFF000, 1))
         die(bootContext->ImageHandle, bootContext->ST, L"Could not allocate bootinfo\r\n");
     #ifdef BASIC_LOGGING
         printString(bootContext->ST, EFI_GREEN, L"BootInfo successfully allocated and mapped at ");
-        printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, BOOTLOADER_BOOTINFO_ADDRESS);
+        printIntegerInHexadecimal(bootContext->ST, EFI_GREEN, 0xFFFFFF7FFFFFF000);
         newLine(bootContext->ST);
     #endif
     bootContext->bootInfo = bootInfo;
@@ -153,7 +154,7 @@ void clearEfiSystemTable(BootContext *bootContext)
 void jumpToKernel(BootContext *bootContext)
 {
     KernelJump jump = (KernelJump) bootContext->kernelJumpAddress;
-    jump(BOOTLOADER_BOOTINFO_ADDRESS, (uint64_t) bootContext->pml4, bootContext->kernelEntry);
+    jump(0xFFFFFF7FFFFFF000, (uint64_t) bootContext->pml4, bootContext->kernelEntry);
 }
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
@@ -166,6 +167,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     bootContext.rootDirectory = getRootDirectory(ImageHandle, SystemTable);
 
     setupConsole(&bootContext);
+    #ifdef DEBUG_BUILD
+        BootConfig *cfg = parseConfigurationFile(SystemTable, bootContext.rootDirectory);
+        freeBootConfig(SystemTable, cfg);
+    #endif
 
     initializePaging(&bootContext);
 
