@@ -1,5 +1,5 @@
 #include <bootloader/paging.h>
-#include <bootloader/memset.h>
+#include <bootloader/memory.h>
 #include <bootloader/console.h>
 
 #define PML4_INDEX_MASK  0x00000FF8000000000 
@@ -121,6 +121,7 @@ uint64_t getPageCount(uint64_t size)
     return size / PAGE_SIZE + (size % PAGE_SIZE != 0);
 }
 
+#ifdef DEBUG_BUILD
 void testPaging(EFI_SYSTEM_TABLE *ST, uint64_t *pml4) 
 {
     printString(ST, EFI_GREEN, L"PML4 ADDRESS ");
@@ -141,3 +142,4 @@ void testPaging(EFI_SYSTEM_TABLE *ST, uint64_t *pml4)
     printIntegerInHexadecimal(ST, EFI_WHITE, paddr);
     newLine(ST);
 }
+#endif

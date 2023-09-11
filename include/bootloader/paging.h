@@ -13,5 +13,7 @@ uint64_t* pagingInit(EFI_SYSTEM_TABLE *ST);
 bool memoryMapPages(EFI_SYSTEM_TABLE *ST, uint64_t *pml4, uint64_t paddr, uint64_t vaddr, uint64_t numberOfPages);
 uint64_t walkPageTables(uint64_t *pml4, uint64_t vaddr);
 uint64_t getPageCount(uint64_t size);
+#ifdef DEBUG_BUILD
 void testPaging(EFI_SYSTEM_TABLE *ST, uint64_t *pml4);
+#endif
 #endif
