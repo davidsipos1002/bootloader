@@ -43,6 +43,7 @@ void obtainBootConfiguration(BootContext *bootContext)
         printBootConfig(bootContext->ST, bootConfig);
     #endif
     bootContext->bootConfig = bootConfig;
+    bootContext->bootInfoAddress = bootConfig->bootInfoVirtualAddress;
 }
 
 void initializePaging(BootContext *bootContext)
@@ -203,7 +204,7 @@ void clearEfiSystemTable(BootContext *bootContext)
 void jumpToKernel(BootContext *bootContext)
 {
     KernelJump jump = (KernelJump) bootContext->kernelJumpAddress;
-    jump(0xFFFFFF7FFFFFF000, (uint64_t) bootContext->pml4, bootContext->kernelEntry);
+    jump(bootContext->bootInfoAddress, (uint64_t) bootContext->pml4, bootContext->kernelEntry);
 }
 
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)

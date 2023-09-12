@@ -16,6 +16,7 @@ typedef struct
     uint64_t *pml4;
     uint64_t kernelEntry;
     BootInfo *bootInfo;
+    uint64_t bootInfoAddress;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
     UINT32 gopMode;
     uint64_t kernelJumpAddress;
