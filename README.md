@@ -1,13 +1,11 @@
 # Bootloader
 
 Simple 64-bit UEFI bootloader for the x86_64 architecture.
-Kernel is searched according to the Kernel_Path CMake variable
-relative to the root directory of the volume from which the bootloader is started.
 Kernel must be a 64-bit ELF executable. Program segments are loaded at the virtual
 addresses specified in the program header table. Upon successful boot the processor
-jumps to the kernel's entry point and loads the BootInfo structure's virtual address,
-configurable by the BootInfo_Address CMake variable, in register %rdi (first function 
-parameter according to the System V ABI). 4-level recursive paging is also set up by the bootloader.
+jumps to the kernel's entry point and loads the BootInfo structure's virtual 
+address in register %rdi (first function parameter according to the System V ABI). 
+4-level recursive paging is also set up by the bootloader.
 
 BootInfo structure:
 1. efi_system_table physical address
@@ -23,11 +21,17 @@ BootInfo structure:
 
 The messages displayed by the bootloader can be configured using the following
 CMake options:
-* basic_logging
-* extensive_logging
-* print_elf
-* print_memory_map
+* basic_logging: activates simple messages
+* extensive_logging: activates messages from internal functions
+* print_elf: prints elf headers
+* print_memory_map: prints initial memory, it can change
+* print_tokens: prints config file tokenization(only if built in Debug mode)
+* print_config: prints chosen bootloader config
 
-Take a look in the CMakeLists.txt file to see how to configure.
+The bootloader is capable of loading other configurable files,
+called initial datafiles. An example bootloader configuration can
+be found in boot.cfg. The loader will search for the configuration 
+in /config/boot.cfg. 
 
-To change the compiler modify the Toolchain.cmake file.
+To change the compiler modify the Toolchain.cmake file. The built UEFI
+application can be found in build/efi.
