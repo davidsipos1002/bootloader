@@ -111,7 +111,7 @@ void setupBootInfo(BootContext *bootContext)
         printIntegerInDecimal(bootContext->ST, EFI_WHITE, sizeof(BootInfo));
         newLine(bootContext->ST);
     #endif
-    BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiLoaderData, getPageCount(sizeof(BootInfo)));
+    BootInfo *bootInfo = allocateZeroedPages(bootContext->ST, EfiReservedMemoryType, getPageCount(sizeof(BootInfo)));
     if(bootInfo == NULL || !memoryMapPages(bootContext->ST, bootContext->pml4, (uint64_t) bootInfo, bootContext->bootConfig->bootInfoVirtualAddress, 1))
         die(bootContext->ImageHandle, bootContext->ST, L"Could not allocate bootinfo\r\n");
     #ifdef BASIC_LOGGING

@@ -52,7 +52,7 @@ uint64_t loadFileToMemory(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE rootDirectory, C
         return 0;
     uint64_t fileSize = getFileSize(ST, fileHandle);
     *pageCount = getPageCount(fileSize);
-    void *buffer = allocateZeroedPages(ST, EfiLoaderData, *pageCount);
+    void *buffer = allocateZeroedPages(ST, EfiReservedMemoryType, *pageCount);
     UINTN bufferSize = *pageCount * PAGE_SIZE;
     EFI_STATUS Status = fileHandle->Read(fileHandle, &bufferSize, buffer);
     closeFileHandle(fileHandle);
