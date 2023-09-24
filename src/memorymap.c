@@ -7,7 +7,7 @@ UINTN getMemoryMap(EFI_SYSTEM_TABLE *ST, MemoryMap *memoryMap)
     UINTN MemoryMapSize = PAGE_SIZE;
     EFI_MEMORY_DESCRIPTOR *MemoryMapPointer = (EFI_MEMORY_DESCRIPTOR *) memoryMap->map;
     if(!MemoryMapPointer)
-        MemoryMapPointer = allocateZeroedPages(ST, EfiLoaderData, 1);
+        MemoryMapPointer = allocateZeroedPages(ST, EfiReservedMemoryType, 1);
     UINTN MapKey;
     UINTN DescriptorSize;
     UINT32 DescriptorVersion;
@@ -20,7 +20,7 @@ UINTN getMemoryMap(EFI_SYSTEM_TABLE *ST, MemoryMap *memoryMap)
         ST->BootServices->FreePages((EFI_PHYSICAL_ADDRESS) MemoryMapPointer, pageCount);
         MemoryMapSize += PAGE_SIZE;
         pageCount++;
-        MemoryMapPointer = allocateZeroedPages(ST, EfiLoaderData, pageCount);
+        MemoryMapPointer = allocateZeroedPages(ST, EfiReservedMemoryType, pageCount);
     }
 
     if(Status != EFI_SUCCESS || DescriptorVersion != EFI_MEMORY_DESCRIPTOR_VERSION)
