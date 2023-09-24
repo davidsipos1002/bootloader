@@ -87,7 +87,7 @@ void loadInitialDataFiles(BootContext *bootContext)
         uint64_t pageCount;
         uint64_t filePhysicalAddress = loadFileToMemory(bootContext->ST, bootContext->rootDirectory, filePath, &pageCount);
         if(!filePhysicalAddress)
-            die(bootContext->ImageHandle, bootContext->ST, L"Could load initial data file\r\n");
+            die(bootContext->ImageHandle, bootContext->ST, L"Could not load initial data file\r\n");
         if(!memoryMapPages(bootContext->ST, bootContext->pml4, filePhysicalAddress, currentFile->loadVirtualAddress, pageCount))
             die(bootContext->ImageHandle, bootContext->ST, L"Could not memory map initial data file\r\n");
         #ifdef BASIC_LOGGING
