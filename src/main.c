@@ -58,6 +58,8 @@ void initializePaging(BootContext *bootContext)
         newLine(bootContext->ST);
     #endif
     bootContext->pml4 = pml4;
+    if (!memoryMapPages(bootContext->ST, pml4, 0, 0, 1))
+        die(bootContext->ImageHandle, bootContext->ST, L"Could not memory map scratchpad\r\n");
 }
 
 void loadAndMapKernel(BootContext *bootContext)
