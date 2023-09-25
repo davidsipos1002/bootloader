@@ -33,5 +33,13 @@ called initial datafiles. An example bootloader configuration can
 be found in boot.cfg. The loader will search for the configuration 
 in /config/boot.cfg. 
 
+Segements loaded from the kernel image, page tables, initial data files and the BootInfo
+are all marked as EfiReservedMemoryType. The bootloader allocates page tables
+such that the first 2 MiB of the virtual address space is mappable, meaning one can
+map the first 512 4 KiB pages without checking the presence of the higher level
+page table entries. This is done because at the beginning the kernel is not capable
+of memory allocation but it needs a way of mapping known physical addresses from 
+the BootInfo structure without allocating additional page tables.
+
 To change the compiler modify the Toolchain.cmake file. The built UEFI
 application can be found in build/efi.
