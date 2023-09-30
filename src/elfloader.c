@@ -96,7 +96,7 @@ EFI_STATUS loadElf(EFI_SYSTEM_TABLE *ST, EFI_FILE_HANDLE kernelImage, uint64_t *
             return EFI_LOAD_ERROR;
         }
         UINTN size = pHeader.p_filesz;
-        if(EFI_ERROR(kernelImage->Read(kernelImage, &size, (void *) segment))) {
+        if(size && EFI_ERROR(kernelImage->Read(kernelImage, &size, (void *) segment))) {
             printString(ST, EFI_RED, L"Could not read program segment\r\n");
             kernelImage->Close(kernelImage);
             return EFI_LOAD_ERROR;
